@@ -1,0 +1,132 @@
+/* pages/Profile.css */
+.profile-page {
+  padding: var(--space-8) 0 var(--space-16);
+}
+
+.profile-card {
+  padding: var(--space-8);
+}
+
+.profile-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+  position: relative;
+}
+
+.profile-header-info {
+  flex: 1;
+}
+
+.profile-name {
+  font-size: var(--text-3xl);
+  color: var(--text-primary);
+  margin-bottom: var(--space-2);
+}
+
+.profile-name-input {
+  font-size: var(--text-2xl);
+  font-weight: 700;
+  padding: 8px 12px;
+  margin-bottom: var(--space-2);
+  width: 100%;
+  max-width: 300px;
+}
+
+.profile-email {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+}
+
+.profile-edit-btn {
+  align-self: flex-start;
+}
+
+.section-subtitle {
+  font-size: var(--text-lg);
+  color: var(--text-primary);
+  margin-bottom: var(--space-5);
+}
+
+.details-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-6);
+}
+
+.detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.detail-label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.detail-value {
+  font-size: var(--text-base);
+  color: var(--text-primary);
+  font-weight: 500;
+  padding: 8px 12px;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  border: 1px solid transparent;
+}
+
+.stats-row {
+  display: flex;
+  gap: var(--space-6);
+}
+
+.p-stat {
+  flex: 1;
+  background: var(--surface);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  text-align: center;
+}
+
+.p-stat-val {
+  font-size: var(--text-2xl);
+  font-weight: 800;
+  color: var(--primary);
+  margin-bottom: var(--space-1);
+}
+
+.p-stat-lbl {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+}
+
+@media (max-width: 600px) {
+  .profile-header {
+    flex-direction: column;
+    text-align: center;
+  }
+  .profile-edit-btn {
+    align-self: center;
+    width: 100%;
+    justify-content: center;
+  }
+  .details-grid {
+    grid-template-columns: 1fr;
+  }
+  .stats-row {
+    flex-direction: column;
+  }
+}

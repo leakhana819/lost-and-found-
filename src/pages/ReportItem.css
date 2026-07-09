@@ -1,0 +1,184 @@
+/* pages/ReportItem.css */
+
+.report-page {
+  padding-bottom: var(--space-16);
+}
+
+.report-header {
+  padding: var(--space-8) 0 var(--space-6);
+}
+
+.report-header h1 {
+  font-size: var(--text-3xl);
+  margin-bottom: var(--space-2);
+  background: var(--gradient-primary);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ─── TYPE TOGGLE ───────────────────────── */
+.type-toggle-wrap {
+  display: flex;
+  gap: var(--space-3);
+  margin-bottom: var(--space-6);
+}
+
+.type-btn {
+  flex: 1;
+  padding: 16px;
+  border-radius: var(--radius-xl);
+  border: 2px solid var(--border);
+  background: var(--surface);
+  font-size: var(--text-base);
+  font-weight: 700;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: var(--transition-spring);
+  backdrop-filter: blur(8px);
+}
+
+.type-btn:hover {
+  border-color: var(--primary);
+  color: var(--text-primary);
+}
+
+.type-lost-active {
+  border-color: var(--danger) !important;
+  background: rgba(239,68,68,0.08) !important;
+  color: var(--danger) !important;
+  box-shadow: 0 4px 20px rgba(239,68,68,0.2);
+}
+
+.type-found-active {
+  border-color: var(--success) !important;
+  background: rgba(16,185,129,0.08) !important;
+  color: var(--success) !important;
+  box-shadow: 0 4px 20px rgba(16,185,129,0.2);
+}
+
+/* ─── REPORT FORM ───────────────────────── */
+.report-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.form-row-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-5);
+}
+
+.char-count {
+  text-align: right;
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+/* ─── IMAGE UPLOAD ──────────────────────── */
+.image-upload-area {
+  border: 2px dashed var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-8) var(--space-6);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: var(--transition);
+  background: var(--glass);
+  text-align: center;
+  gap: var(--space-2);
+}
+
+.image-upload-area:hover {
+  border-color: var(--primary);
+  background: rgba(99,102,241,0.05);
+}
+
+.upload-icon {
+  color: var(--text-muted);
+  transition: var(--transition);
+}
+
+.image-upload-area:hover .upload-icon {
+  color: var(--primary);
+  transform: translateY(-3px);
+}
+
+.upload-text {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.upload-sub {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}
+
+.upload-input {
+  display: none;
+}
+
+.image-previews {
+  display: flex;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  margin-top: var(--space-4);
+}
+
+.image-preview-item {
+  position: relative;
+  width: 100px;
+  height: 100px;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  border: 2px solid var(--border);
+}
+
+.image-preview-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.image-remove-btn {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 22px;
+  height: 22px;
+  background: rgba(0,0,0,0.6);
+  border: none;
+  border-radius: var(--radius-full);
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition);
+}
+
+.image-remove-btn:hover {
+  background: var(--danger);
+}
+
+/* ─── ACTIONS ───────────────────────────── */
+.report-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-4);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border-light);
+}
+
+/* ─── RESPONSIVE ────────────────────────── */
+@media (max-width: 768px) {
+  .type-toggle-wrap { flex-direction: column; }
+  .form-row-2 { grid-template-columns: 1fr; }
+  .report-actions { flex-direction: column-reverse; }
+  .report-actions .btn { width: 100%; justify-content: center; }
+}
