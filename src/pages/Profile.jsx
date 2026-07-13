@@ -20,7 +20,7 @@ export default function Profile() {
     phone: currentUser?.phone || '',
     department: currentUser?.department || '',
     year: currentUser?.year || '',
-    profilePhoto: currentUser?.profilePhoto || '',
+    profilePhoto: currentUser?.profile_photo || '',
   });
 
   const myItems = items.filter(i => i.reportedBy === currentUser?.id);
@@ -63,9 +63,9 @@ export default function Profile() {
           {/* Header / Avatar */}
           <div className="profile-header">
             <div className="avatar avatar-xl animate-fadeInDown" style={{ position: 'relative', overflow: 'hidden' }}>
-              {form.profilePhoto || currentUser?.profilePhoto ? (
+              {form.profilePhoto || currentUser?.profile_photo ? (
                 <img 
-                  src={form.profilePhoto || currentUser.profilePhoto} 
+                  src={form.profilePhoto || currentUser.profile_photo} 
                   alt="Profile" 
                   style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
                 />
@@ -87,7 +87,21 @@ export default function Profile() {
                       const file = e.target.files?.[0];
                       if (file) {
                         const reader = new FileReader();
-                        reader.onload = (e) => setForm(f => ({ ...f, profilePhoto: e.target.result }));
+                        reader.onload = (event) => {
+                          const img = new Image();
+                          img.onload = () => {
+                            const canvas = document.createElement('canvas');
+                            const MAX_WIDTH = 150;
+                            const scaleSize = MAX_WIDTH / img.width;
+                            canvas.width = MAX_WIDTH;
+                            canvas.height = img.height * scaleSize;
+                            const ctx = canvas.getContext('2d');
+                            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                            const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.8);
+                            setForm(f => ({ ...f, profilePhoto: compressedDataUrl }));
+                          };
+                          img.src = event.target.result;
+                        };
                         reader.readAsDataURL(file);
                       }
                     }} 

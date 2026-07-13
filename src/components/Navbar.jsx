@@ -124,8 +124,8 @@ export default function Navbar() {
                   aria-label="User menu"
                 >
                   <div className="avatar avatar-sm" style={{ overflow: 'hidden' }}>
-                    {currentUser?.profilePhoto ? (
-                      <img src={currentUser.profilePhoto} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    {currentUser?.profile_photo ? (
+                      <img src={currentUser.profile_photo} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                     ) : (
                       getInitials(currentUser?.name)
                     )}
@@ -140,8 +140,8 @@ export default function Navbar() {
                   <div className="user-dropdown animate-fadeInDown">
                     <div className="drop-header">
                       <div className="avatar" style={{ overflow: 'hidden' }}>
-                        {currentUser?.profilePhoto ? (
-                          <img src={currentUser.profilePhoto} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        {currentUser?.profile_photo ? (
+                          <img src={currentUser.profile_photo} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                         ) : (
                           getInitials(currentUser?.name)
                         )}
