@@ -1,5 +1,4 @@
 // App.jsx — CampusConnect
-import { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 
 // Providers
@@ -7,10 +6,6 @@ import { ThemeProvider } from './context/ThemeContext.jsx';
 import { ToastProvider } from './context/ToastContext.jsx';
 import { AuthProvider, useAuth } from './context/AuthContext.jsx';
 import { ItemProvider } from './context/ItemContext.jsx';
-
-// Utilities
-import { isSeeded } from './utils/localStorage.js';
-import { seedDemoData } from './utils/seedData.js';
 
 // Components
 import Navbar from './components/Navbar.jsx';
@@ -30,7 +25,7 @@ import MyPosts from './pages/MyPosts.jsx';
 import Notifications from './pages/Notifications.jsx';
 import Profile from './pages/Profile.jsx';
 
-// Component to handle redirecting authenticated users away from auth pages
+// Redirect authenticated users away from auth pages
 function PublicRoute({ children }) {
   const { isLoggedIn } = useAuth();
   if (isLoggedIn) return <Navigate to="/dashboard" replace />;
@@ -38,17 +33,6 @@ function PublicRoute({ children }) {
 }
 
 function AppRoutes() {
-  // Seed demo data on very first launch
-  useEffect(() => {
-    if (!isSeeded()) {
-      seedDemoData();
-      // small reload trick to ensure state picks it up if it wasn't reactive,
-      // but our context initialization will pick it up on next render.
-      // Easiest is to force a reload just once.
-      window.location.reload();
-    }
-  }, []);
-
   return (
     <>
       <Navbar />

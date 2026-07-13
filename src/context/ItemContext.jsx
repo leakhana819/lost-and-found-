@@ -1,138 +1,216 @@
-// context/ItemContext.jsx — CampusConnect
-import { createContext, useContext, useState, useCallback } from 'react';
-import {
-  getItems, createItem, updateItem, deleteItem,
-  getNotifications, createNotification,
-  createClaim, getClaims,
-} from '../utils/localStorage.js';
+// context/ItemContext.jsx — CampusConnect (Supabase)
+import { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import { supabase } from '../lib/supabase.js';
 
 const ItemContext = createContext(null);
 
 export function ItemProvider({ children }) {
-  const [items, setItems] = useState(getItems);
-  const [notifications, setNotifications] = useState(getNotifications);
+  const [items, setItems] = useState([]);
+  const [notifications, setNotifications] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // ─── ITEMS CRUD ───────────────────────
-  const addItem = useCallback((itemData) => {
-    const item = createItem(itemData);
-    const allItems = getItems();
-    setItems(allItems);
+  // ─── FETCH ALL ITEMS ──────────────────────────────────────
+  const fetchItems = useCallback(async () => {
+    const { data, error } = await supabase
+      .from('items')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) { console.error('fetchItems error:', error); return; }
+    // Normalize snake_case → camelCase for compatibility with existing UI
+    setItems((data || []).map(normalizeItem));
+  }, []);
+
+  // ─── FETCH NOTIFICATIONS ──────────────────────────────────
+  const fetchNotifications = useCallback(async () => {
+    const { data, error } = await supabase
+      .from('notifications')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) { console.error('fetchNotifications error:', error); return; }
+    setNotifications((data || []).map(normalizeNotification));
+  }, []);
+
+  // Initial load
+  useEffect(() => {
+    Promise.all([fetchItems(), fetchNotifications()]).finally(() => setLoading(false));
+  }, [fetchItems, fetchNotifications]);
+
+  // ─── ADD ITEM ─────────────────────────────────────────────
+  const addItem = useCallback(async (itemData) => {
+    const { data, error } = await supabase
+      .from('items')
+      .insert({
+        title: itemData.title,
+        type: itemData.type,
+        category: itemData.category,
+        description: itemData.description,
+        location: itemData.location,
+        date: itemData.date,
+        contact_info: itemData.contactInfo,
+        images: itemData.images || [],
+        reported_by: itemData.reportedBy,
+        reported_by_name: itemData.reportedByName,
+      })
+      .select()
+      .single();
+
+    if (error) { console.error('addItem error:', error); throw error; }
+
+    const newItem = normalizeItem(data);
 
     // ─── MATCHING LOGIC ───
-    const oppositeType = item.type === 'lost' ? 'found' : 'lost';
-    
-    // Find active items of opposite type in the same category
-    const matches = allItems.filter(i => 
-      i.id !== item.id && 
-      i.type === oppositeType && 
-      i.category === item.category &&
+    const oppositeType = newItem.type === 'lost' ? 'found' : 'lost';
+    const matches = items.filter(i =>
+      i.type === oppositeType &&
+      i.category === newItem.category &&
       !i.resolved
     );
 
-    // Simple keyword match in title (words > 3 chars)
     const getKeywords = (str) => (str || '').toLowerCase().split(/\W+/).filter(w => w.length > 3);
-    const itemKeywords = getKeywords(item.title);
+    const itemKeywords = getKeywords(newItem.title);
 
-    matches.forEach(match => {
+    for (const match of matches) {
       const matchKeywords = getKeywords(match.title);
       const hasOverlap = itemKeywords.some(kw => matchKeywords.includes(kw));
-      
       if (hasOverlap) {
-        // We found a match!
-        
-        // Message for the person who LOST the item
-        const lostMsg = "Congratulations! We found a potential match for your lost item. Please check here.";
-        // Message for the person who FOUND the item
-        const foundMsg = "We found a potential match for the item you reported found. Please check here.";
+        const lostMsg = 'Congratulations! We found a potential match for your lost item. Please check here.';
+        const foundMsg = 'We found a potential match for the item you reported found. Please check here.';
 
-        // 1. Notify the owner of the existing item
-        createNotification({
-          type: 'system',
-          message: match.type === 'lost' ? lostMsg : foundMsg,
-          itemId: item.id,
-          fromUser: null,
-          fromUserName: 'CampusConnect System',
-          toUser: match.reportedBy,
-        });
-
-        // 2. Notify the creator of the new item
-        createNotification({
-          type: 'system',
-          message: item.type === 'lost' ? lostMsg : foundMsg,
-          itemId: match.id,
-          fromUser: null,
-          fromUserName: 'CampusConnect System',
-          toUser: item.reportedBy,
-        });
+        await supabase.from('notifications').insert([
+          {
+            type: 'system',
+            message: match.type === 'lost' ? lostMsg : foundMsg,
+            item_id: newItem.id,
+            from_user: null,
+            from_user_name: 'CampusConnect System',
+            to_user: match.reportedBy,
+          },
+          {
+            type: 'system',
+            message: newItem.type === 'lost' ? lostMsg : foundMsg,
+            item_id: match.id,
+            from_user: null,
+            from_user_name: 'CampusConnect System',
+            to_user: newItem.reportedBy,
+          },
+        ]);
       }
-    });
-
-    // Refresh notifications state if any were added
-    if (matches.length > 0) {
-      setNotifications(getNotifications());
     }
 
-    return item;
-  }, []);
+    await fetchItems();
+    await fetchNotifications();
+    return newItem;
+  }, [items, fetchItems, fetchNotifications]);
 
-  const editItem = useCallback((id, updates) => {
-    const item = updateItem(id, updates);
-    setItems(getItems());
-    return item;
-  }, []);
+  // ─── EDIT ITEM ────────────────────────────────────────────
+  const editItem = useCallback(async (id, updates) => {
+    // Convert camelCase fields to snake_case for Supabase
+    const dbUpdates = {};
+    if (updates.title !== undefined) dbUpdates.title = updates.title;
+    if (updates.description !== undefined) dbUpdates.description = updates.description;
+    if (updates.location !== undefined) dbUpdates.location = updates.location;
+    if (updates.category !== undefined) dbUpdates.category = updates.category;
+    if (updates.resolved !== undefined) dbUpdates.resolved = updates.resolved;
+    if (updates.claimedBy !== undefined) dbUpdates.claimed_by = updates.claimedBy;
+    if (updates.claimRequests !== undefined) dbUpdates.claim_requests = updates.claimRequests;
+    if (updates.comments !== undefined) dbUpdates.comments = updates.comments;
+    if (updates.contactInfo !== undefined) dbUpdates.contact_info = updates.contactInfo;
+    dbUpdates.updated_at = new Date().toISOString();
 
-  const removeItem = useCallback((id) => {
-    deleteItem(id);
-    setItems(getItems());
-  }, []);
+    const { error } = await supabase
+      .from('items')
+      .update(dbUpdates)
+      .eq('id', id);
 
-  const refreshItems = useCallback(() => {
-    setItems(getItems());
-  }, []);
+    if (error) { console.error('editItem error:', error); throw error; }
+    await fetchItems();
+  }, [fetchItems]);
 
-  // ─── CLAIMS ──────────────────────────
-  const sendClaimRequest = useCallback((itemId, claimantId, claimantName, message, ownerId) => {
-    // Create claim record
-    const claim = createClaim({ itemId, claimantId, claimantName, message, ownerId });
+  // ─── REMOVE ITEM ──────────────────────────────────────────
+  const removeItem = useCallback(async (id) => {
+    const { error } = await supabase.from('items').delete().eq('id', id);
+    if (error) { console.error('removeItem error:', error); throw error; }
+    await fetchItems();
+  }, [fetchItems]);
 
-    // Create notification for item owner
-    const notif = createNotification({
+  const refreshItems = useCallback(() => fetchItems(), [fetchItems]);
+
+  // ─── SEND CLAIM REQUEST ───────────────────────────────────
+  const sendClaimRequest = useCallback(async (itemId, claimantId, claimantName, message, ownerId) => {
+    // Insert claim
+    const { data: claim, error: claimError } = await supabase
+      .from('claims')
+      .insert({ item_id: itemId, claimant_id: claimantId, claimant_name: claimantName, message, owner_id: ownerId })
+      .select()
+      .single();
+
+    if (claimError) { console.error('sendClaimRequest error:', claimError); throw claimError; }
+
+    // Add notification for owner
+    await supabase.from('notifications').insert({
       type: 'claim',
       message: `${claimantName} sent a claim request for your item.`,
-      itemId,
-      fromUser: claimantId,
-      fromUserName: claimantName,
-      toUser: ownerId,
+      item_id: itemId,
+      from_user: claimantId,
+      from_user_name: claimantName,
+      to_user: ownerId,
     });
 
-    setNotifications(getNotifications());
-
-    // Update item claimRequests list
+    // Update item's claim_requests array
     const item = items.find(i => i.id === itemId);
     if (item) {
-      editItem(itemId, {
-        claimRequests: [...(item.claimRequests || []), claim.id],
-      });
+      const existing = item.claimRequests || [];
+      await supabase
+        .from('items')
+        .update({ claim_requests: [...existing, claim.id], updated_at: new Date().toISOString() })
+        .eq('id', itemId);
     }
 
-    return { claim, notif };
-  }, [items, editItem]);
+    await fetchItems();
+    await fetchNotifications();
+    return claim;
+  }, [items, fetchItems, fetchNotifications]);
 
-  // ─── RESOLVE ITEM ─────────────────────
-  const resolveItem = useCallback((itemId, claimedBy) => {
-    editItem(itemId, { resolved: true, claimedBy });
+  // ─── RESOLVE ITEM ─────────────────────────────────────────
+  const resolveItem = useCallback(async (itemId, claimedBy) => {
+    await editItem(itemId, { resolved: true, claimedBy: claimedBy || null });
   }, [editItem]);
 
-  // ─── NOTIFICATIONS ────────────────────
-  const refreshNotifications = useCallback(() => {
-    setNotifications(getNotifications());
+  // ─── REFRESH NOTIFICATIONS ────────────────────────────────
+  const refreshNotifications = useCallback(() => fetchNotifications(), [fetchNotifications]);
+
+  // ─── NOTIFICATION ACTIONS ────────────────────────────────
+  const markNotificationRead = useCallback(async (id) => {
+    await supabase.from('notifications').update({ read: true }).eq('id', id);
+    await fetchNotifications();
+  }, [fetchNotifications]);
+
+  const markAllNotificationsRead = useCallback(async (userId) => {
+    await supabase.from('notifications').update({ read: true }).eq('to_user', userId).eq('read', false);
+    await fetchNotifications();
+  }, [fetchNotifications]);
+
+  const deleteNotification = useCallback(async (id) => {
+    await supabase.from('notifications').delete().eq('id', id);
+    await fetchNotifications();
+  }, [fetchNotifications]);
+
+  // ─── GET ITEM BY ID ───────────────────────────────────────
+  const getItemById = useCallback(async (id) => {
+    const { data, error } = await supabase.from('items').select('*').eq('id', id).single();
+    if (error || !data) return null;
+    return normalizeItem(data);
   }, []);
 
   return (
     <ItemContext.Provider value={{
-      items, addItem, editItem, removeItem, refreshItems,
+      items, loading, addItem, editItem, removeItem, refreshItems,
       sendClaimRequest, resolveItem,
       notifications, refreshNotifications,
+      markNotificationRead, markAllNotificationsRead, deleteNotification,
+      getItemById,
     }}>
       {children}
     </ItemContext.Provider>
@@ -144,3 +222,40 @@ export const useItems = () => {
   if (!ctx) throw new Error('useItems must be used within ItemProvider');
   return ctx;
 };
+
+// ─── NORMALIZERS (snake_case → camelCase) ─────────────────────
+function normalizeItem(row) {
+  return {
+    id: row.id,
+    title: row.title,
+    type: row.type,
+    category: row.category,
+    description: row.description,
+    location: row.location,
+    date: row.date,
+    contactInfo: row.contact_info,
+    images: row.images || [],
+    reportedBy: row.reported_by,
+    reportedByName: row.reported_by_name,
+    resolved: row.resolved,
+    claimedBy: row.claimed_by,
+    claimRequests: row.claim_requests || [],
+    comments: row.comments || [],
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+function normalizeNotification(row) {
+  return {
+    id: row.id,
+    type: row.type,
+    message: row.message,
+    itemId: row.item_id,
+    fromUser: row.from_user,
+    fromUserName: row.from_user_name,
+    toUser: row.to_user,
+    read: row.read,
+    createdAt: row.created_at,
+  };
+}

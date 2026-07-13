@@ -11,29 +11,29 @@ import { useToast } from '../context/ToastContext.jsx';
 import Modal from '../components/Modal.jsx';
 import EmptyState from '../components/EmptyState.jsx';
 import { getCategoryInfo, formatDate, formatRelativeTime, getInitials } from '../utils/helpers.js';
-import { getItemById, updateItem } from '../utils/localStorage.js';
 import './ItemDetail.css';
 
 export default function ItemDetail() {
   const { id } = useParams();
   const { currentUser } = useAuth();
-  const { editItem, removeItem, sendClaimRequest } = useItems();
+  const { editItem, removeItem, sendClaimRequest, getItemById } = useItems();
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  const [item, setItem] = useState(() => getItemById(id));
+  const [item, setItem] = useState(null);
   const [activeImage, setActiveImage] = useState(0);
   const [claimOpen, setClaimOpen] = useState(false);
   const [claimMsg, setClaimMsg] = useState('');
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [commentText, setCommentText] = useState('');
 
-  // Refresh item from LS when page mounts
+  // Fetch item from Supabase when page mounts
   useEffect(() => {
-    const fresh = getItemById(id);
-    if (!fresh) navigate('/browse');
-    else setItem(fresh);
-  }, [id, navigate]);
+    getItemById(id).then(fresh => {
+      if (!fresh) navigate('/browse');
+      else setItem(fresh);
+    });
+  }, [id, navigate, getItemById]);
 
   if (!item) {
     return (
@@ -50,33 +50,33 @@ export default function ItemDetail() {
   const hasAlreadyClaimed = item.claimRequests?.includes(currentUser?.id);
 
   // ─── CLAIM ───────────────────────────────
-  const handleClaim = () => {
+  const handleClaim = async () => {
     if (!claimMsg.trim()) { toast.error('Please add a message describing how you can verify ownership.'); return; }
-    sendClaimRequest(item.id, currentUser.id, currentUser.name, claimMsg, item.reportedBy);
-    // Update item in state
-    const updated = getItemById(id);
+    await sendClaimRequest(item.id, currentUser.id, currentUser.name, claimMsg, item.reportedBy);
+    const updated = await getItemById(id);
     setItem(updated);
     setClaimOpen(false);
     setClaimMsg('');
-    toast.success('Claim request sent! The owner will be notified. 📬');
+    toast.success('Claim request sent! The owner will be notified. 📣');
   };
 
   // ─── DELETE ──────────────────────────────
-  const handleDelete = () => {
-    removeItem(item.id);
+  const handleDelete = async () => {
+    await removeItem(item.id);
     toast.success('Item deleted successfully.');
     navigate('/my-posts');
   };
 
   // ─── RESOLVE ─────────────────────────────
-  const handleResolve = () => {
-    editItem(item.id, { resolved: true });
-    setItem(getItemById(id));
+  const handleResolve = async () => {
+    await editItem(item.id, { resolved: true });
+    const updated = await getItemById(id);
+    setItem(updated);
     toast.success('Item marked as resolved! 🎉');
   };
 
   // ─── COMMENTS ────────────────────────────
-  const handleComment = () => {
+  const handleComment = async () => {
     if (!commentText.trim()) return;
     const newComment = {
       id: crypto.randomUUID(),
@@ -86,7 +86,7 @@ export default function ItemDetail() {
       createdAt: new Date().toISOString(),
     };
     const updatedComments = [...(item.comments || []), newComment];
-    updateItem(id, { comments: updatedComments });
+    await editItem(id, { comments: updatedComments });
     setItem(prev => ({ ...prev, comments: updatedComments }));
     setCommentText('');
     toast.success('Comment added!');

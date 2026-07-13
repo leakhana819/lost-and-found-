@@ -97,9 +97,7 @@ export default function ReportItem() {
     setErrors({});
     setLoading(true);
 
-    await new Promise(r => setTimeout(r, 800));
-
-    const item = addItem({
+    const item = await addItem({
       ...form,
       type,
       images,

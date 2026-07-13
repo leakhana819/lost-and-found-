@@ -6,7 +6,7 @@ import {
 } from 'react-icons/fi';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useTheme } from '../context/ThemeContext.jsx';
-import { getNotifications } from '../utils/localStorage.js';
+import { useItems } from '../context/ItemContext.jsx';
 import { getInitials } from '../utils/helpers.js';
 
 const NAV_LINKS = [
@@ -19,11 +19,11 @@ const NAV_LINKS = [
 export default function Navbar() {
   const { currentUser, logout, isLoggedIn } = useAuth();
   const { theme, toggleTheme } = useTheme();
+  const { notifications } = useItems();
   const navigate = useNavigate();
 
   const [menuOpen, setMenuOpen]       = useState(false);
   const [userDropOpen, setUserDropOpen] = useState(false);
-  const [unreadCount, setUnreadCount] = useState(0);
   const [scrolled, setScrolled]       = useState(false);
   const dropRef = useRef(null);
 
@@ -34,17 +34,10 @@ export default function Navbar() {
     return () => window.removeEventListener('scroll', handler);
   }, []);
 
-  // Notification badge
-  useEffect(() => {
-    if (!currentUser) return;
-    const refresh = () => {
-      const all = getNotifications();
-      setUnreadCount(all.filter(n => n.toUser === currentUser.id && !n.read).length);
-    };
-    refresh();
-    const timer = setInterval(refresh, 5000);
-    return () => clearInterval(timer);
-  }, [currentUser]);
+  // Notification badge — derived from context (already fetched from Supabase)
+  const unreadCount = currentUser
+    ? notifications.filter(n => n.toUser === currentUser.id && !n.read).length
+    : 0;
 
   // Close dropdown on outside click
   useEffect(() => {

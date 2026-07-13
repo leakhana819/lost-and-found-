@@ -1,52 +1,120 @@
-// context/AuthContext.jsx — CampusConnect
+// context/AuthContext.jsx — CampusConnect (Supabase)
 import { createContext, useContext, useState, useCallback } from 'react';
-import {
-  getCurrentUser, saveCurrentUser, clearCurrentUser,
-  findUserByEmail, createUser,
-} from '../utils/localStorage.js';
+import { supabase } from '../lib/supabase.js';
+
+const CURRENT_USER_KEY = 'cc_current_user';
 
 const AuthContext = createContext(null);
 
+// ─── Session helpers (localStorage for persistence) ───────────
+const getStoredUser = () => {
+  try {
+    const raw = localStorage.getItem(CURRENT_USER_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch { return null; }
+};
+const storeUser = (user) => localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(user));
+const clearStoredUser = () => localStorage.removeItem(CURRENT_USER_KEY);
+
 export function AuthProvider({ children }) {
-  const [currentUser, setCurrentUser] = useState(getCurrentUser);
+  const [currentUser, setCurrentUser] = useState(getStoredUser);
 
-  // Login — returns { success, error }
-  const login = useCallback((email, password) => {
-    const user = findUserByEmail(email);
-    if (!user) return { success: false, error: 'No account found with this email.' };
-    if (user.password !== password) return { success: false, error: 'Incorrect password.' };
+  // ─── LOGIN ────────────────────────────────────────────────
+  const login = useCallback(async (email, password) => {
+    const { data, error } = await supabase
+      .from('users')
+      .select('*')
+      .eq('email', email.toLowerCase().trim())
+      .single();
 
-    const { password: _pw, ...safeUser } = user;
-    saveCurrentUser(safeUser);
+    if (error || !data) return { success: false, error: 'No account found with this email.' };
+    if (data.password !== password) return { success: false, error: 'Incorrect password.' };
+
+    const { password: _pw, ...safeUser } = data;
+    storeUser(safeUser);
     setCurrentUser(safeUser);
     return { success: true };
   }, []);
 
-  // Signup — returns { success, error }
-  const signup = useCallback((userData) => {
-    const existing = findUserByEmail(userData.email);
+  // ─── SIGNUP ───────────────────────────────────────────────
+  const signup = useCallback(async (userData) => {
+    // Check if email already exists
+    const { data: existing } = await supabase
+      .from('users')
+      .select('id')
+      .eq('email', userData.email.toLowerCase().trim())
+      .single();
+
     if (existing) return { success: false, error: 'An account with this email already exists.' };
 
-    const newUser = createUser(userData);
-    const { password: _pw, ...safeUser } = newUser;
-    saveCurrentUser(safeUser);
+    const { data, error } = await supabase
+      .from('users')
+      .insert({
+        name: userData.name,
+        email: userData.email.toLowerCase().trim(),
+        password: userData.password,
+        department: userData.department,
+        year: userData.year,
+        phone: userData.phone || '',
+      })
+      .select()
+      .single();
+
+    if (error || !data) {
+      console.error('Signup error:', error);
+      return { success: false, error: 'Failed to create account. Please try again.' };
+    }
+
+    const { password: _pw, ...safeUser } = data;
+    storeUser(safeUser);
     setCurrentUser(safeUser);
     return { success: true };
   }, []);
 
+  // ─── LOGOUT ───────────────────────────────────────────────
   const logout = useCallback(() => {
-    clearCurrentUser();
+    clearStoredUser();
     setCurrentUser(null);
   }, []);
 
-  // Refresh currentUser from LS (e.g. after profile update)
-  const refreshUser = useCallback(() => {
-    const user = getCurrentUser();
-    setCurrentUser(user);
+  // ─── REFRESH USER (re-fetch from Supabase) ────────────────
+  const refreshUser = useCallback(async () => {
+    if (!currentUser?.id) return;
+    const { data } = await supabase
+      .from('users')
+      .select('*')
+      .eq('id', currentUser.id)
+      .single();
+
+    if (data) {
+      const { password: _pw, ...safeUser } = data;
+      storeUser(safeUser);
+      setCurrentUser(safeUser);
+    }
+  }, [currentUser?.id]);
+
+  // ─── UPDATE USER ──────────────────────────────────────────
+  const updateUser = useCallback(async (id, updates) => {
+    const { data, error } = await supabase
+      .from('users')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Update user error:', error);
+      return { success: false, error: 'Failed to update profile.' };
+    }
+
+    const { password: _pw, ...safeUser } = data;
+    storeUser(safeUser);
+    setCurrentUser(safeUser);
+    return { success: true };
   }, []);
 
   return (
-    <AuthContext.Provider value={{ currentUser, login, signup, logout, refreshUser, isLoggedIn: !!currentUser }}>
+    <AuthContext.Provider value={{ currentUser, login, signup, logout, refreshUser, updateUser, isLoggedIn: !!currentUser }}>
       {children}
     </AuthContext.Provider>
   );

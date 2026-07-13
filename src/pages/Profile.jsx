@@ -5,12 +5,12 @@ import { FiMail, FiPhone, FiBook, FiAward, FiEdit3, FiSave, FiMapPin, FiCalendar
 import { useAuth } from '../context/AuthContext.jsx';
 import { useItems } from '../context/ItemContext.jsx';
 import { useToast } from '../context/ToastContext.jsx';
-import { updateUserById } from '../utils/localStorage.js';
+
 import { getInitials, DEPARTMENTS, getCategoryInfo, formatRelativeTime } from '../utils/helpers.js';
 import './Profile.css';
 
 export default function Profile() {
-  const { currentUser, refreshUser } = useAuth();
+  const { currentUser, refreshUser, updateUser } = useAuth();
   const { items } = useItems();
   const { toast } = useToast();
 
@@ -33,24 +33,27 @@ export default function Profile() {
     return true;
   });
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!form.name.trim()) { toast.error('Name cannot be empty.'); return; }
     if (form.phone.trim() && !/^\d{10}$/.test(form.phone.trim())) { 
       toast.error('Phone number must be exactly 10 digits.'); 
       return; 
     }
     
-    updateUserById(currentUser.id, {
+    const result = await updateUser(currentUser.id, {
       name: form.name,
       phone: form.phone,
       department: form.department,
       year: form.year,
-      profilePhoto: form.profilePhoto,
+      profile_photo: form.profilePhoto,
     });
     
-    refreshUser();
-    setIsEditing(false);
-    toast.success('Profile updated successfully! 🎉');
+    if (result.success) {
+      setIsEditing(false);
+      toast.success('Profile updated successfully! 🎉');
+    } else {
+      toast.error(result.error || 'Failed to update profile.');
+    }
   };
 
   return (

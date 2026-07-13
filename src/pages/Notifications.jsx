@@ -5,14 +5,14 @@ import { FiBell, FiTrash2, FiCheck, FiInfo } from 'react-icons/fi';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useItems } from '../context/ItemContext.jsx';
 import { useToast } from '../context/ToastContext.jsx';
-import { markNotificationRead, markAllNotificationsRead, deleteNotification } from '../utils/localStorage.js';
+
 import { formatRelativeTime } from '../utils/helpers.js';
 import EmptyState from '../components/EmptyState.jsx';
 import './Notifications.css';
 
 export default function Notifications() {
   const { currentUser } = useAuth();
-  const { notifications, refreshNotifications } = useItems();
+  const { notifications, refreshNotifications, markNotificationRead, markAllNotificationsRead, deleteNotification } = useItems();
   const { toast } = useToast();
 
   const myNotifs = notifications.filter(n => n.toUser === currentUser?.id);
@@ -23,20 +23,17 @@ export default function Notifications() {
     refreshNotifications();
   }, [refreshNotifications]);
 
-  const handleMarkRead = (id) => {
-    markNotificationRead(id);
-    refreshNotifications();
+  const handleMarkRead = async (id) => {
+    await markNotificationRead(id);
   };
 
-  const handleMarkAllRead = () => {
-    markAllNotificationsRead(currentUser.id);
-    refreshNotifications();
+  const handleMarkAllRead = async () => {
+    await markAllNotificationsRead(currentUser.id);
     toast.success('All notifications marked as read.');
   };
 
-  const handleDelete = (id) => {
-    deleteNotification(id);
-    refreshNotifications();
+  const handleDelete = async (id) => {
+    await deleteNotification(id);
   };
 
   return (

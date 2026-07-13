@@ -7,7 +7,7 @@ import { useAuth } from '../context/AuthContext.jsx';
 import { useToast } from '../context/ToastContext.jsx';
 import LoadingSpinner from '../components/LoadingSpinner.jsx';
 import Modal from '../components/Modal.jsx';
-import { getUsers, getDeviceSocialAccounts, addDeviceSocialAccount } from '../utils/localStorage.js';
+
 import { getInitials } from '../utils/helpers.js';
 import './Auth.css';
 
@@ -53,10 +53,7 @@ export default function Login() {
     setErrors({});
     setLoading(true);
 
-    // Simulate async
-    await new Promise(r => setTimeout(r, 600));
-
-    const result = login(form.email, form.password);
+    const result = await login(form.email, form.password);
     setLoading(false);
 
     if (result.success) {
@@ -69,15 +66,7 @@ export default function Login() {
 
   const openSocialModal = (provider) => {
     setSocialProvider(provider);
-    
-    // Get emails that have logged in with this provider on this device
-    const deviceEmails = getDeviceSocialAccounts(provider);
-    
-    // Find the full user objects for these emails
-    const allUsers = getUsers();
-    const deviceUsers = allUsers.filter(u => deviceEmails.includes(u.email));
-    
-    setSavedUsers(deviceUsers);
+    setSavedUsers([]);
     setSocialModalOpen(true);
   };
 
@@ -85,13 +74,12 @@ export default function Login() {
     setSocialModalOpen(false);
     setServerError('');
     setLoading(true);
-    await new Promise(r => setTimeout(r, 600)); // Simulate delay
     
     // Try to login first
-    let result = login(email, 'social123');
+    let result = await login(email, 'social123');
     if (!result.success) {
       // If user doesn't exist, create one via signup
-      result = signup({
+      result = await signup({
         name,
         email,
         password: 'social123',
@@ -103,7 +91,6 @@ export default function Login() {
 
     setLoading(false);
     if (result.success) {
-      addDeviceSocialAccount(socialProvider, email);
       toast.success(`Successfully logged in with ${socialProvider} 🎉`);
       navigate(from, { replace: true });
     } else {
@@ -122,12 +109,13 @@ export default function Login() {
     setForm({ email: 'arjun@campus.edu', password: 'demo123' });
     setServerError('');
     setLoading(true);
-    await new Promise(r => setTimeout(r, 400));
-    const result = login('arjun@campus.edu', 'demo123');
+    const result = await login('arjun@campus.edu', 'demo123');
     setLoading(false);
     if (result.success) {
       toast.success('Logged in as demo user 🎉');
       navigate('/dashboard', { replace: true });
+    } else {
+      setServerError('Demo account not found. Please run the SQL schema in Supabase first.');
     }
   };
 

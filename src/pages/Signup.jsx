@@ -4,8 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { FiEye, FiEyeOff, FiArrowRight, FiUser } from 'react-icons/fi';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useToast } from '../context/ToastContext.jsx';
-import { useItems } from '../context/ItemContext.jsx';
-import { createNotification } from '../utils/localStorage.js';
+
 import { DEPARTMENTS } from '../utils/helpers.js';
 import LoadingSpinner from '../components/LoadingSpinner.jsx';
 import './Auth.css';
@@ -22,7 +21,6 @@ const YEARS = ['1st Year', '2nd Year', '3rd Year', '4th Year', 'PG 1st Year', 'P
 export default function Signup() {
   const { signup } = useAuth();
   const { toast } = useToast();
-  const { refreshNotifications } = useItems();
   const navigate = useNavigate();
 
   const [form, setForm] = useState({
@@ -59,9 +57,7 @@ export default function Signup() {
     setErrors({});
     setLoading(true);
 
-    await new Promise(r => setTimeout(r, 700));
-
-    const result = signup({
+    const result = await signup({
       name: form.name.trim(),
       email: form.email.trim().toLowerCase(),
       password: form.password,
