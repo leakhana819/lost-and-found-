@@ -1,19 +1,31 @@
 // pages/Dashboard.jsx — CampusConnect
-import { useMemo } from 'react';
-import { Link } from 'react-router-dom';
+import { useMemo, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import {
-  FiSearch, FiPlusCircle, FiMapPin, FiClock,
+  FiPlusCircle,
   FiTrendingUp, FiAlertCircle, FiCheckCircle, FiStar,
+  FiSearch, FiSliders, FiMapPin, FiEye, FiBookmark,
 } from 'react-icons/fi';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useItems } from '../context/ItemContext.jsx';
 import ItemCard from '../components/ItemCard.jsx';
-import { getInitials, formatRelativeTime, getCategoryInfo } from '../utils/helpers.js';
+import { formatRelativeTime, getCategoryInfo } from '../utils/helpers.js';
 import './Dashboard.css';
 
 export default function Dashboard() {
   const { currentUser } = useAuth();
   const { items } = useItems();
+  const navigate = useNavigate();
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+    navigate('/browse', { state: { query: searchQuery } });
+  };
+
+  const handleFilterClick = () => {
+    navigate('/browse', { state: { query: searchQuery } });
+  };
 
   const stats = useMemo(() => {
     const lost     = items.filter(i => i.type === 'lost' && !i.resolved);
@@ -32,45 +44,58 @@ export default function Dashboard() {
   [items, currentUser]);
 
   const STAT_CARDS = [
-    { label: 'Active Lost', value: stats.lost,     icon: <FiAlertCircle />, color: 'var(--danger)',  bg: 'rgba(239,68,68,0.1)', to: '/browse', state: { type: 'lost', hideResolved: true } },
-    { label: 'Active Found', value: stats.found,   icon: <FiCheckCircle />, color: 'var(--success)', bg: 'rgba(16,185,129,0.1)', to: '/browse', state: { type: 'found', hideResolved: true } },
-    { label: 'Resolved',    value: stats.resolved, icon: <FiStar />,        color: 'var(--primary)', bg: 'rgba(99,102,241,0.1)', to: '/browse', state: { resolved: true } },
-    { label: 'My Posts',    value: stats.mine,     icon: <FiTrendingUp />,  color: 'var(--warning)', bg: 'rgba(245,158,11,0.1)', to: '/my-posts', state: null },
+    { label: 'Lost Items',  value: stats.lost,     icon: <FiAlertCircle />, to: '/browse',    state: { type: 'lost', hideResolved: true }, accent: '#E8604C' },
+    { label: 'Found Items', value: stats.found,    icon: <FiCheckCircle />, to: '/browse',    state: { type: 'found', hideResolved: true }, accent: '#2E9B6E' },
+    { label: 'Resolved',    value: stats.resolved, icon: <FiStar />,        to: '/browse',    state: { resolved: true },                   accent: '#7C6EE6' },
+    { label: 'My Reports',  value: stats.mine,     icon: <FiTrendingUp />,  to: '/my-posts',  state: null,                                 accent: '#3A8FC7' },
   ];
 
   const QUICK_ACTIONS = [
-    { to: '/report?type=lost',  icon: '🔍', label: 'Report Lost Item',  desc: 'Describe your lost item',    color: 'var(--danger)' },
-    { to: '/report?type=found', icon: '✅', label: 'Report Found Item', desc: 'Help someone recover it',    color: 'var(--success)' },
-    { to: '/browse',            icon: '🗂️', label: 'Browse All Items',  desc: 'Search & filter all posts',  color: 'var(--primary)' },
-    { to: '/my-posts',          icon: '📌', label: 'My Posts',          desc: 'Manage your reports',        color: 'var(--secondary)' },
+    { to: '/report?type=lost',  icon: <FiAlertCircle />, label: 'Report Lost',   accent: '#E8604C' },
+    { to: '/report?type=found', icon: <FiCheckCircle />, label: 'Report Found',  accent: '#2E9B6E' },
+    { to: '/browse',            icon: <FiEye />,         label: 'Browse Items',  accent: '#3A8FC7' },
+    { to: '/my-posts',          icon: <FiBookmark />,    label: 'My Posts',      accent: '#7C6EE6' },
   ];
 
   return (
     <div className="page-wrapper dashboard-page">
       <div className="container">
-        {/* ─── WELCOME HEADER ─── */}
-        <div className="dashboard-header animate-fadeInDown">
-          <div className="dashboard-greeting">
-            <div className="avatar avatar-lg greeting-avatar">
-              {getInitials(currentUser?.name)}
-            </div>
-            <div>
-              <h1 className="greeting-title">
-                Good {getGreeting()}, {currentUser?.name?.split(' ')[0]}! 👋
-              </h1>
-              <p className="greeting-sub">
-                {currentUser?.department} · {currentUser?.year}
-              </p>
-            </div>
-          </div>
-          <div className="dashboard-header-actions">
-            <Link to="/browse" className="btn btn-secondary">
-              <FiSearch /> Search Items
-            </Link>
-            <Link to="/report" className="btn btn-primary">
-              <FiPlusCircle /> Report Item
+        {/* ─── HERO ─── */}
+        <div className="dashboard-hero animate-fadeInDown">
+          <p className="hero-greeting">Hello, {currentUser?.name?.split(' ')[0]} 👋</p>
+          <h1 className="hero-title">Welcome back.</h1>
+          <p className="hero-sub">Manage all lost and found activities from one place.</p>
+          <div className="hero-actions">
+            <Link to="/report" className="btn btn-primary hero-cta">
+              <FiPlusCircle size={16} /> Report Item
             </Link>
           </div>
+        </div>
+
+        {/* ─── SEARCH BAR ─── */}
+        <div className="dashboard-search-wrap animate-fadeInDown">
+          <form className="dashboard-search-form" onSubmit={handleSearch}>
+            <div className="dashboard-search-bar">
+              <FiSearch className="ds-search-icon" size={20} />
+              <input
+                type="search"
+                className="ds-search-input"
+                placeholder="Search lost or found items..."
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                aria-label="Search items"
+              />
+              <button
+                type="button"
+                className="ds-filter-btn"
+                onClick={handleFilterClick}
+                aria-label="Open filters"
+                title="Filter items"
+              >
+                <FiSliders size={18} />
+              </button>
+            </div>
+          </form>
         </div>
 
         {/* ─── STATS ─── */}
@@ -81,15 +106,13 @@ export default function Dashboard() {
               to={s.to}
               state={s.state}
               className="stat-card"
-              style={{ animationDelay: `${i * 0.08}s`, textDecoration: 'none' }}
+              style={{ animationDelay: `${i * 0.08}s`, textDecoration: 'none', '--card-accent': s.accent }}
             >
-              <div className="stat-icon" style={{ background: s.bg, color: s.color }}>
+              <div className="stat-icon">
                 {s.icon}
               </div>
-              <div className="stat-info">
-                <div className="stat-value" style={{ color: s.color }}>{s.value}</div>
-                <div className="stat-label">{s.label}</div>
-              </div>
+              <div className="stat-value">{s.value}</div>
+              <div className="stat-label">{s.label}</div>
             </Link>
           ))}
         </div>
@@ -103,14 +126,10 @@ export default function Dashboard() {
                 key={a.to}
                 to={a.to}
                 className="quick-action-card"
-                style={{ animationDelay: `${i * 0.1}s` }}
+                style={{ animationDelay: `${i * 0.08}s`, '--qa-accent': a.accent }}
               >
-                <div className="qa-icon" style={{ background: `${a.color}18` }}>{a.icon}</div>
-                <div className="qa-text">
-                  <span className="qa-label">{a.label}</span>
-                  <span className="qa-desc">{a.desc}</span>
-                </div>
-                <span className="qa-arrow">→</span>
+                <div className="qa-icon">{a.icon}</div>
+                <span className="qa-label">{a.label}</span>
               </Link>
             ))}
           </div>
@@ -131,45 +150,37 @@ export default function Dashboard() {
             </div>
           </section>
 
-          {/* Sidebar */}
-          <aside className="dashboard-sidebar">
-            {/* My Activity */}
-            <div className="card sidebar-card">
-              <h3 className="sidebar-title">📌 My Recent Posts</h3>
-              {myRecentItems.length === 0 ? (
-                <div className="sidebar-empty">
-                  <p>You haven't posted anything yet.</p>
-                  <Link to="/report" className="btn btn-primary btn-sm" style={{ marginTop: 12 }}>
-                    Post Your First Item
-                  </Link>
-                </div>
-              ) : (
-                <div className="activity-list">
-                  {myRecentItems.map(item => {
-                    const cat = getCategoryInfo(item.category);
-                    return (
-                      <Link key={item.id} to={`/item/${item.id}`} className="activity-item">
-                        <div className="activity-icon" style={{ background: `${cat.color}18` }}>
-                          {cat.icon}
-                        </div>
-                        <div className="activity-text">
-                          <span className="activity-title">{item.title}</span>
-                          <span className="activity-meta">
-                            <span className={`badge badge-${item.type}`}>{item.type}</span>
-                            &nbsp;·&nbsp;{formatRelativeTime(item.createdAt)}
-                          </span>
-                        </div>
-                        {item.resolved && <span style={{ color: 'var(--success)', fontSize: 12, fontWeight: 700 }}>✓</span>}
-                      </Link>
-                    );
-                  })}
-                  <Link to="/my-posts" className="btn btn-secondary btn-sm" style={{ marginTop: 8, width: '100%', justifyContent: 'center' }}>
-                    View all my posts
-                  </Link>
-                </div>
-              )}
+          {/* My Recent Posts (Moved here) */}
+          <section className="dashboard-section">
+            <div className="section-row">
+              <div className="section-label">📌 My Recent Posts</div>
+              <Link to="/my-posts" className="btn btn-ghost btn-sm">Manage →</Link>
             </div>
+            
+            {myRecentItems.length === 0 ? (
+              <div className="empty-compact">You haven't posted anything yet. <Link to="/report">Post now</Link></div>
+            ) : (
+              <div className="compact-activity-list">
+                {myRecentItems.map(item => (
+                  <Link key={item.id} to={`/item/${item.id}`} className="compact-activity-item">
+                    <span className="ca-title">{item.title}</span>
+                    <div className="ca-right">
+                      <span className={`ca-status ca-${item.type}`}>{item.type}</span>
+                      <span className="ca-time">{formatRelativeTime(item.createdAt)}</span>
+                      {item.resolved ? (
+                        <span className="ca-icon ca-resolved" title="Resolved">✓</span>
+                      ) : (
+                        <span className="ca-icon ca-pending" title="Active">●</span>
+                      )}
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </section>
 
+        {/* Sidebar */}
+        <aside className="dashboard-sidebar">
             {/* Tips */}
             <div className="card sidebar-card tips-card">
               <h3 className="sidebar-title">💡 Tips</h3>

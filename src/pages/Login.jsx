@@ -1,12 +1,14 @@
-// pages/Login.jsx — CampusConnect
 import { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { FiMail, FiLock, FiEye, FiEyeOff, FiArrowRight } from 'react-icons/fi';
+import { FiMail, FiLock, FiEye, FiEyeOff, FiArrowRight, FiUser } from 'react-icons/fi';
 import { FcGoogle } from 'react-icons/fc';
 import { FaFacebook } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useToast } from '../context/ToastContext.jsx';
 import LoadingSpinner from '../components/LoadingSpinner.jsx';
+import Modal from '../components/Modal.jsx';
+import { getUsers, getDeviceSocialAccounts, addDeviceSocialAccount } from '../utils/localStorage.js';
+import { getInitials } from '../utils/helpers.js';
 import './Auth.css';
 
 const PERKS = [
@@ -29,6 +31,11 @@ export default function Login() {
   const [showPwd, setShowPwd] = useState(false);
   const [loading, setLoading] = useState(false);
   const [serverError, setServerError] = useState('');
+  
+  // Social Modal State
+  const [socialModalOpen, setSocialModalOpen] = useState(false);
+  const [socialProvider, setSocialProvider] = useState('');
+  const [savedUsers, setSavedUsers] = useState([]);
 
   const validate = () => {
     const e = {};
@@ -60,7 +67,22 @@ export default function Login() {
     }
   };
 
-  const handleSocialLogin = async (provider, email, name) => {
+  const openSocialModal = (provider) => {
+    setSocialProvider(provider);
+    
+    // Get emails that have logged in with this provider on this device
+    const deviceEmails = getDeviceSocialAccounts(provider);
+    
+    // Find the full user objects for these emails
+    const allUsers = getUsers();
+    const deviceUsers = allUsers.filter(u => deviceEmails.includes(u.email));
+    
+    setSavedUsers(deviceUsers);
+    setSocialModalOpen(true);
+  };
+
+  const executeSocialLogin = async (email, name) => {
+    setSocialModalOpen(false);
     setServerError('');
     setLoading(true);
     await new Promise(r => setTimeout(r, 600)); // Simulate delay
@@ -81,11 +103,19 @@ export default function Login() {
 
     setLoading(false);
     if (result.success) {
-      toast.success(`Successfully logged in with ${provider} 🎉`);
+      addDeviceSocialAccount(socialProvider, email);
+      toast.success(`Successfully logged in with ${socialProvider} 🎉`);
       navigate(from, { replace: true });
     } else {
-      setServerError(`Failed to login with ${provider}`);
+      setServerError(`Failed to login with ${socialProvider}`);
     }
+  };
+
+  const handleSocialLoginNewAccount = () => {
+    const inputEmail = window.prompt(`${socialProvider} Sign-In\n\nEnter your Email Address:`);
+    if (!inputEmail) return;
+    const name = window.prompt("Enter your Name:") || inputEmail.split('@')[0];
+    executeSocialLogin(inputEmail, name);
   };
 
   const handleDemoLogin = async () => {
@@ -193,10 +223,10 @@ export default function Login() {
           <div className="divider-text" style={{ margin: '20px 0' }}>or</div>
 
           <div style={{ display: 'flex', gap: '10px', marginBottom: '15px' }}>
-            <button type="button" onClick={() => handleSocialLogin('Google', 'google.user@campus.edu', 'Google User')} className="btn btn-secondary" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }} disabled={loading}>
+            <button type="button" onClick={() => openSocialModal('Google')} className="btn btn-secondary" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }} disabled={loading}>
               <FcGoogle size={20} /> Google
             </button>
-            <button type="button" onClick={() => handleSocialLogin('Facebook', 'facebook.user@campus.edu', 'Facebook User')} className="btn btn-secondary" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', color: '#1877F2' }} disabled={loading}>
+            <button type="button" onClick={() => openSocialModal('Facebook')} className="btn btn-secondary" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', color: '#1877F2' }} disabled={loading}>
               <FaFacebook size={20} /> Facebook
             </button>
           </div>
@@ -211,6 +241,60 @@ export default function Login() {
           </p>
         </div>
       </div>
+
+      {/* Social Login Account Picker Modal */}
+      <Modal isOpen={socialModalOpen} onClose={() => setSocialModalOpen(false)} title={`Sign in with ${socialProvider}`}>
+        <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+          <h3>Choose an account</h3>
+          <p style={{ color: 'var(--text-muted)' }}>to continue to CampusConnect</p>
+        </div>
+        
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          {savedUsers.map(u => (
+            <button 
+              key={u.id} 
+              onClick={() => executeSocialLogin(u.email, u.name)}
+              style={{
+                display: 'flex', alignItems: 'center', gap: '12px', padding: '12px',
+                border: '1px solid var(--border)', borderRadius: '8px', background: 'transparent',
+                cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s'
+              }}
+              onMouseOver={(e) => e.currentTarget.style.background = 'var(--bg-secondary)'}
+              onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}
+            >
+              <div className="avatar avatar-sm" style={{ overflow: 'hidden' }}>
+                {u.profilePhoto ? (
+                  <img src={u.profilePhoto} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                ) : (
+                  getInitials(u.name)
+                )}
+              </div>
+              <div>
+                <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{u.name}</div>
+                <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{u.email}</div>
+              </div>
+            </button>
+          ))}
+          
+          <button 
+            onClick={handleSocialLoginNewAccount}
+            style={{
+              display: 'flex', alignItems: 'center', gap: '12px', padding: '12px',
+              border: '1px solid var(--border)', borderRadius: '8px', background: 'transparent',
+              cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s'
+            }}
+            onMouseOver={(e) => e.currentTarget.style.background = 'var(--bg-secondary)'}
+            onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}
+          >
+            <div className="avatar avatar-sm" style={{ background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}>
+              <FiUser size={16} />
+            </div>
+            <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
+              Use another account
+            </div>
+          </button>
+        </div>
+      </Modal>
     </div>
   );
 }

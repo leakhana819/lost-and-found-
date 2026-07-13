@@ -81,7 +81,11 @@ export default function ReportItem() {
       e.description = 'Add at least 20 characters of description';
     if (!form.location) e.location = 'Please select a location';
     if (!form.date) e.date = 'Date is required';
-    if (!form.contactInfo.trim()) e.contactInfo = 'Contact info is required';
+    if (!form.contactInfo.trim()) {
+      e.contactInfo = 'Contact number is required';
+    } else if (!/^\d{10}$/.test(form.contactInfo.trim())) {
+      e.contactInfo = 'Please enter a valid 10-digit phone number';
+    }
     return e;
   };
 
@@ -219,11 +223,11 @@ export default function ReportItem() {
             </div>
 
             <div className="form-group">
-              <label className="form-label"><FiPhone size={13} /> Contact Info *</label>
+              <label className="form-label"><FiPhone size={13} /> Contact Number *</label>
               <input
-                type="text"
+                type="tel"
                 className={`form-input ${errors.contactInfo ? 'error' : ''}`}
-                placeholder="Phone or email for contact"
+                placeholder="10-digit mobile number"
                 value={form.contactInfo}
                 onChange={set('contactInfo')}
               />

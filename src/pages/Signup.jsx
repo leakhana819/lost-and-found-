@@ -47,6 +47,7 @@ export default function Signup() {
     else if (form.password !== form.confirmPassword) e.confirmPassword = 'Passwords do not match';
     if (!form.department) e.department = 'Please select your department';
     if (!form.year) e.year = 'Please select your year';
+    if (form.phone.trim() && !/^\d{10}$/.test(form.phone.trim())) e.phone = 'Phone must be exactly 10 digits';
     return e;
   };
 
@@ -195,6 +196,7 @@ export default function Signup() {
                 onChange={set('phone')}
                 autoComplete="tel"
               />
+              {errors.phone && <span className="form-error">⚠ {errors.phone}</span>}
             </div>
 
             {/* Password */}

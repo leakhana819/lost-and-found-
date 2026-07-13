@@ -9,6 +9,7 @@ const KEYS = {
   CLAIMS:       'cc_claims',
   THEME:        'cc_theme',
   SEEDED:       'cc_seeded',
+  DEVICE_SOCIAL:'cc_device_social',
 };
 
 export { KEYS };
@@ -150,3 +151,18 @@ export const saveTheme = (theme) => lsSet(KEYS.THEME, theme);
 // ─── SEED FLAG ───────────────────────────
 export const isSeeded = () => lsGet(KEYS.SEEDED, false);
 export const markSeeded = () => lsSet(KEYS.SEEDED, true);
+
+// ─── DEVICE SOCIAL ACCOUNTS ──────────────
+export const getDeviceSocialAccounts = (provider) => {
+  const accounts = lsGet(KEYS.DEVICE_SOCIAL, {});
+  return accounts[provider] || [];
+};
+
+export const addDeviceSocialAccount = (provider, email) => {
+  const accounts = lsGet(KEYS.DEVICE_SOCIAL, {});
+  if (!accounts[provider]) accounts[provider] = [];
+  if (!accounts[provider].includes(email)) {
+    accounts[provider].push(email);
+    lsSet(KEYS.DEVICE_SOCIAL, accounts);
+  }
+};

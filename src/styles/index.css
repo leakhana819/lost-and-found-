@@ -9,9 +9,9 @@
 /* ─── CSS VARIABLES ─────────────────────── */
 :root {
   /* Brand Colors */
-  --primary:        #6366f1;
-  --primary-dark:   #4f46e5;
-  --primary-light:  #818cf8;
+  --primary:        #4F46E5;
+  --primary-dark:   #4338CA;
+  --primary-light:  #818CF8;
   --secondary:      #8b5cf6;
   --accent:         #06b6d4;
   --accent-dark:    #0891b2;
@@ -27,13 +27,13 @@
   --info-light:     #dbeafe;
 
   /* Light Mode Surfaces */
-  --bg:             #f0f4ff;
-  --bg-secondary:   #e8eeff;
-  --surface:        rgba(255, 255, 255, 0.80);
-  --surface-solid:  #ffffff;
-  --glass:          rgba(255, 255, 255, 0.25);
-  --glass-border:   rgba(255, 255, 255, 0.40);
-  --card-bg:        rgba(255, 255, 255, 0.75);
+  --bg:             #F8FAFC;
+  --bg-secondary:   #F1F5F9;
+  --surface:        #FFFFFF;
+  --surface-solid:  #FFFFFF;
+  --glass:          rgba(255, 255, 255, 0.7);
+  --glass-border:   #E5E7EB;
+  --card-bg:        #FFFFFF;
 
   /* Text */
   --text-primary:   #0f172a;
@@ -42,15 +42,15 @@
   --text-inverse:   #ffffff;
 
   /* Borders */
-  --border:         rgba(99, 102, 241, 0.15);
-  --border-light:   rgba(99, 102, 241, 0.08);
+  --border:         #E5E7EB;
+  --border-light:   #F1F5F9;
 
   /* Shadows */
-  --shadow-sm:   0 1px 3px rgba(99,102,241,0.08), 0 1px 2px rgba(0,0,0,0.06);
-  --shadow-md:   0 4px 16px rgba(99,102,241,0.12), 0 2px 8px rgba(0,0,0,0.08);
-  --shadow-lg:   0 10px 40px rgba(99,102,241,0.16), 0 4px 16px rgba(0,0,0,0.08);
-  --shadow-xl:   0 20px 60px rgba(99,102,241,0.20), 0 8px 24px rgba(0,0,0,0.10);
-  --shadow-glow: 0 0 30px rgba(99,102,241,0.3);
+  --shadow-sm:   0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md:   0 4px 16px rgba(0,0,0,0.08), 0 2px 6px rgba(0,0,0,0.05);
+  --shadow-lg:   0 10px 30px rgba(0,0,0,0.1), 0 4px 10px rgba(0,0,0,0.06);
+  --shadow-xl:   0 20px 50px rgba(0,0,0,0.12), 0 8px 20px rgba(0,0,0,0.08);
+  --shadow-glow: 0 0 20px rgba(79,70,229,0.2);
 
   /* Gradients */
   --gradient-primary:   linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
@@ -59,7 +59,7 @@
   --gradient-success:   linear-gradient(135deg, #10b981 0%, #06b6d4 100%);
   --gradient-hero:      linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%);
   --gradient-card:      linear-gradient(145deg, rgba(255,255,255,0.9), rgba(255,255,255,0.5));
-  --gradient-bg:        linear-gradient(135deg, #f0f4ff 0%, #e8eeff 50%, #f0f9ff 100%);
+  --gradient-bg:        #F8FAFC;
   
   /* Radius */
   --radius-sm:    6px;
@@ -299,26 +299,27 @@ p {
 }
 
 .btn-primary {
-  background: var(--gradient-primary);
+  background: #4F46E5;
   color: white;
-  box-shadow: 0 4px 15px rgba(99,102,241,0.4);
+  box-shadow: 0 1px 3px rgba(79,70,229,0.3);
 }
 
 .btn-primary:hover {
-  box-shadow: 0 6px 25px rgba(99,102,241,0.55);
+  background: #4338CA;
+  box-shadow: 0 3px 12px rgba(79,70,229,0.3);
   transform: translateY(-1px);
 }
 
 .btn-secondary {
-  background: var(--surface);
-  color: var(--primary);
-  border: 1.5px solid var(--border);
-  backdrop-filter: blur(8px);
+  background: #FFFFFF;
+  color: #374151;
+  border: 1px solid #E5E7EB;
 }
 
 .btn-secondary:hover {
-  border-color: var(--primary);
-  box-shadow: var(--shadow-md);
+  border-color: #C7D2FE;
+  color: #4F46E5;
+  box-shadow: 0 2px 8px rgba(79,70,229,0.1);
   transform: translateY(-1px);
 }
 
@@ -375,26 +376,22 @@ p {
 
 /* ─── CARDS ─────────────────────────────── */
 .card {
-  background: var(--card-bg);
-  border: 1px solid var(--glass-border);
-  border-radius: var(--radius-xl);
+  background: #FFFFFF;
+  border: 1px solid #E5E7EB;
+  border-radius: 16px;
   padding: var(--space-6);
-  box-shadow: var(--shadow-md);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  transition: var(--transition);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  transition: box-shadow 0.18s ease, transform 0.18s ease;
 }
 
 .card:hover {
-  box-shadow: var(--shadow-lg);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.09);
   transform: translateY(-2px);
 }
 
 .card-glass {
-  background: var(--glass);
-  border: 1px solid var(--glass-border);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  background: rgba(255,255,255,0.6);
+  border: 1px solid #E5E7EB;
 }
 
 /* ─── BADGES ────────────────────────────── */

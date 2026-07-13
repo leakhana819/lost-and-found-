@@ -1,7 +1,7 @@
 // utils/seedData.js — CampusConnect
 // Demo data seeded on first app launch
 
-import { getUsers, saveUsers, saveItems, markSeeded, saveNotifications } from './localStorage.js';
+import { getUsers, saveUsers, getItems, saveItems, getNotifications, saveNotifications, markSeeded } from './localStorage.js';
 
 const DEMO_USER_ID = 'demo-user-001';
 const DEMO_USER2_ID = 'demo-user-002';
@@ -279,7 +279,10 @@ export const seedDemoData = () => {
     },
   ];
 
-  saveItems(demoItems);
+  const existingItems = getItems();
+  const demoItemIds = demoItems.map(i => i.id);
+  const filteredItems = existingItems.filter(i => !demoItemIds.includes(i.id));
+  saveItems([...filteredItems, ...demoItems]);
 
   // Seed demo notifications
   const demoNotifications = [
@@ -308,6 +311,9 @@ export const seedDemoData = () => {
     },
   ];
 
-  saveNotifications(demoNotifications);
+  const existingNotifs = getNotifications();
+  const demoNotifIds = demoNotifications.map(n => n.id);
+  const filteredNotifs = existingNotifs.filter(n => !demoNotifIds.includes(n.id));
+  saveNotifications([...filteredNotifs, ...demoNotifications]);
   markSeeded();
 };
