@@ -1,5 +1,6 @@
 // App.jsx — CampusConnect
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { isSupabaseConfigured } from './lib/supabase.js';
 
 // Providers
 import { ThemeProvider } from './context/ThemeContext.jsx';
@@ -62,7 +63,33 @@ function AppRoutes() {
   );
 }
 
+function EnvErrorScreen() {
+  return (
+    <div style={{ padding: '3rem', fontFamily: 'sans-serif', maxWidth: '600px', margin: '0 auto', textAlign: 'center' }}>
+      <h1 style={{ color: '#e53e3e', fontSize: '2rem', marginBottom: '1rem' }}>Missing Database Configuration</h1>
+      <p style={{ fontSize: '1.1rem', marginBottom: '1.5rem', lineHeight: '1.5' }}>
+        The app is running, but it cannot connect to the database because the environment variables are missing in Vercel.
+      </p>
+      <div style={{ textAlign: 'left', background: '#f7fafc', padding: '1.5rem', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+        <h3 style={{ marginTop: 0 }}>How to fix this in Vercel:</h3>
+        <ol style={{ paddingLeft: '1.5rem', lineHeight: '1.6' }}>
+          <li>Go to your <strong>Vercel Dashboard</strong> &gt; Your Project.</li>
+          <li>Click the <strong>Settings</strong> tab.</li>
+          <li>Select <strong>Environment Variables</strong>.</li>
+          <li>Add Variable 1:<br/>Key: <code>VITE_SUPABASE_URL</code><br/>Value: <code>https://eposndkvwefutassaroz.supabase.co</code></li>
+          <li>Add Variable 2:<br/>Key: <code>VITE_SUPABASE_ANON_KEY</code><br/>Value: <code>sb_publishable_gVeHwc2mZHjgAEWYs0eHug_UmM53rDB</code></li>
+          <li>Go to the <strong>Deployments</strong> tab and hit <strong>Redeploy</strong>.</li>
+        </ol>
+      </div>
+    </div>
+  );
+}
+
 export default function App() {
+  if (!isSupabaseConfigured) {
+    return <EnvErrorScreen />;
+  }
+
   return (
     <ThemeProvider>
       <ToastProvider>
