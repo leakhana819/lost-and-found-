@@ -40,7 +40,7 @@ export default function Signup() {
     if (!form.email.trim()) e.email = 'Email is required';
     else if (!/\S+@\S+\.\S+/.test(form.email)) e.email = 'Enter a valid email';
     if (!form.password) e.password = 'Password is required';
-    else if (form.password.length < 6) e.password = 'Minimum 6 characters';
+    else if (form.password.length < 8) e.password = 'Minimum 8 characters';
     if (!form.confirmPassword) e.confirmPassword = 'Please confirm your password';
     else if (form.password !== form.confirmPassword) e.confirmPassword = 'Passwords do not match';
     if (!form.department) e.department = 'Please select your department';
@@ -202,7 +202,7 @@ export default function Signup() {
                 <input
                   type={showPwd ? 'text' : 'password'}
                   className={`form-input ${errors.password ? 'error' : ''}`}
-                  placeholder="Minimum 6 characters"
+                  placeholder="Minimum 8 characters"
                   value={form.password}
                   onChange={set('password')}
                   autoComplete="new-password"
