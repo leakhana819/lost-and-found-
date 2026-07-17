@@ -140,37 +140,44 @@ export function AuthProvider({ children }) {
 
   // ─── SOCIAL LOGIN ──────────────────────────────────────────
   const socialLogin = useCallback(async (email, name) => {
-    let { data: user, error } = await supabase
-      .from('users')
-      .select('*')
-      .eq('email', email.toLowerCase().trim())
-      .single();
-
-    if (!user) {
-      const { data: newUser, error: createError } = await supabase
+    try {
+      if (!email) return { success: false, error: 'Email is required' };
+      
+      let { data: user, error } = await supabase
         .from('users')
-        .insert({
-          name: name || email.split('@')[0],
-          email: email.toLowerCase().trim(),
-          password: 'social_login_no_password', 
-          department: 'General',
-          year: 'N/A',
-          phone: '',
-        })
-        .select()
-        .single();
+        .select('*')
+        .eq('email', email.toLowerCase().trim())
+        .maybeSingle();
 
-      if (createError || !newUser) {
-        console.error('Social signup error:', createError);
-        return { success: false, error: 'Failed to create social account.' };
+      if (!user) {
+        const { data: newUser, error: createError } = await supabase
+          .from('users')
+          .insert({
+            name: name || email.split('@')[0],
+            email: email.toLowerCase().trim(),
+            password: 'social_login_no_password', 
+            department: 'General',
+            year: 'N/A',
+            phone: '',
+          })
+          .select()
+          .single();
+
+        if (createError || !newUser) {
+          console.error('Social signup error:', createError);
+          return { success: false, error: createError?.message || 'Failed to create social account.' };
+        }
+        user = newUser;
       }
-      user = newUser;
-    }
 
-    const { password: _pw, ...safeUser } = user;
-    storeUser(safeUser);
-    setCurrentUser(safeUser);
-    return { success: true };
+      const { password: _pw, ...safeUser } = user;
+      storeUser(safeUser);
+      setCurrentUser(safeUser);
+      return { success: true };
+    } catch (err) {
+      console.error('socialLogin exception:', err);
+      return { success: false, error: err.message || 'An unexpected error occurred during login.' };
+    }
   }, []);
 
   return (
