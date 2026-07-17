@@ -66,7 +66,8 @@ export default function Login() {
 
   const openSocialModal = (provider) => {
     setSocialProvider(provider);
-    setSavedUsers([]);
+    const saved = JSON.parse(localStorage.getItem('savedSocialUsers') || '[]');
+    setSavedUsers(saved);
     setSocialModalOpen(true);
   };
 
@@ -91,6 +92,12 @@ export default function Login() {
 
     setLoading(false);
     if (result.success) {
+      const saved = JSON.parse(localStorage.getItem('savedSocialUsers') || '[]');
+      if (!saved.find(u => u.email === email)) {
+        saved.push({ id: Date.now(), email, name });
+        localStorage.setItem('savedSocialUsers', JSON.stringify(saved));
+      }
+      
       toast.success(`Successfully logged in with ${socialProvider} 🎉`);
       navigate(from, { replace: true });
     } else {
@@ -198,6 +205,11 @@ export default function Login() {
                 </button>
               </div>
               {errors.password && <span className="form-error">⚠ {errors.password}</span>}
+              <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '8px' }}>
+                <Link to="/forgot-password" style={{ fontSize: '0.85rem', color: 'var(--primary-color)', textDecoration: 'none', fontWeight: 500 }}>
+                  Forgot password?
+                </Link>
+              </div>
             </div>
 
             {/* Submit */}

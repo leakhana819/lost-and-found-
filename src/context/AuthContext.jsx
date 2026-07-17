@@ -113,8 +113,33 @@ export function AuthProvider({ children }) {
     return { success: true };
   }, []);
 
+  // ─── RESET PASSWORD ──────────────────────────────────────────
+  const resetPassword = useCallback(async (email, newPassword) => {
+    const { data: user, error: findError } = await supabase
+      .from('users')
+      .select('id')
+      .eq('email', email.toLowerCase().trim())
+      .single();
+
+    if (findError || !user) {
+      return { success: false, error: 'No account found with this email.' };
+    }
+
+    const { error: updateError } = await supabase
+      .from('users')
+      .update({ password: newPassword })
+      .eq('id', user.id);
+
+    if (updateError) {
+      console.error('Reset password error:', updateError);
+      return { success: false, error: 'Failed to reset password. Please try again.' };
+    }
+
+    return { success: true };
+  }, []);
+
   return (
-    <AuthContext.Provider value={{ currentUser, login, signup, logout, refreshUser, updateUser, isLoggedIn: !!currentUser }}>
+    <AuthContext.Provider value={{ currentUser, login, signup, logout, refreshUser, updateUser, resetPassword, isLoggedIn: !!currentUser }}>
       {children}
     </AuthContext.Provider>
   );
