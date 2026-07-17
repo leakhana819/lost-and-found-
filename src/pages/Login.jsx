@@ -19,7 +19,7 @@ const PERKS = [
 ];
 
 export default function Login() {
-  const { login, signup } = useAuth();
+  const { login, signup, socialLogin } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
   const location = useLocation();
@@ -76,19 +76,7 @@ export default function Login() {
     setServerError('');
     setLoading(true);
     
-    // Try to login first
-    let result = await login(email, 'social123');
-    if (!result.success) {
-      // If user doesn't exist, create one via signup
-      result = await signup({
-        name,
-        email,
-        password: 'social123',
-        department: 'General',
-        year: 'N/A',
-        phone: ''
-      });
-    }
+    let result = await socialLogin(email, name);
 
     setLoading(false);
     if (result.success) {
@@ -101,7 +89,7 @@ export default function Login() {
       toast.success(`Successfully logged in with ${socialProvider} 🎉`);
       navigate(from, { replace: true });
     } else {
-      setServerError(`Failed to login with ${socialProvider}`);
+      setServerError(result.error || `Failed to login with ${socialProvider}`);
     }
   };
 

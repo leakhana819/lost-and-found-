@@ -138,8 +138,43 @@ export function AuthProvider({ children }) {
     return { success: true };
   }, []);
 
+  // ─── SOCIAL LOGIN ──────────────────────────────────────────
+  const socialLogin = useCallback(async (email, name) => {
+    let { data: user, error } = await supabase
+      .from('users')
+      .select('*')
+      .eq('email', email.toLowerCase().trim())
+      .single();
+
+    if (!user) {
+      const { data: newUser, error: createError } = await supabase
+        .from('users')
+        .insert({
+          name: name || email.split('@')[0],
+          email: email.toLowerCase().trim(),
+          password: 'social_login_no_password', 
+          department: 'General',
+          year: 'N/A',
+          phone: '',
+        })
+        .select()
+        .single();
+
+      if (createError || !newUser) {
+        console.error('Social signup error:', createError);
+        return { success: false, error: 'Failed to create social account.' };
+      }
+      user = newUser;
+    }
+
+    const { password: _pw, ...safeUser } = user;
+    storeUser(safeUser);
+    setCurrentUser(safeUser);
+    return { success: true };
+  }, []);
+
   return (
-    <AuthContext.Provider value={{ currentUser, login, signup, logout, refreshUser, updateUser, resetPassword, isLoggedIn: !!currentUser }}>
+    <AuthContext.Provider value={{ currentUser, login, signup, logout, refreshUser, updateUser, resetPassword, socialLogin, isLoggedIn: !!currentUser }}>
       {children}
     </AuthContext.Provider>
   );
