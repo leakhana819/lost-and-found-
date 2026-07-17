@@ -61,41 +61,37 @@ export function ItemProvider({ children }) {
     const newItem = normalizeItem(data);
 
     // ─── MATCHING LOGIC ───
+    // Notify based on same category, opposite type, unresolved items
     const oppositeType = newItem.type === 'lost' ? 'found' : 'lost';
     const matches = items.filter(i =>
       i.type === oppositeType &&
       i.category === newItem.category &&
-      !i.resolved
+      !i.resolved &&
+      i.reportedBy !== newItem.reportedBy  // don't notify yourself
     );
 
-    const getKeywords = (str) => (str || '').toLowerCase().split(/\W+/).filter(w => w.length > 3);
-    const itemKeywords = getKeywords(newItem.title);
+    if (matches.length > 0) {
+      // Notify the new poster that matches exist
+      const matchWord = newItem.type === 'lost' ? 'found' : 'lost';
+      await supabase.from('notifications').insert({
+        type: 'match',
+        message: `🎉 Good news! There ${matches.length === 1 ? 'is' : 'are'} ${matches.length} potential match${matches.length === 1 ? '' : 'es'} for your ${newItem.type} item "${newItem.title}". Check the browse page!`,
+        item_id: newItem.id,
+        from_user: null,
+        from_user_name: 'CampusConnect System',
+        to_user: newItem.reportedBy,
+      });
 
-    for (const match of matches) {
-      const matchKeywords = getKeywords(match.title);
-      const hasOverlap = itemKeywords.some(kw => matchKeywords.includes(kw));
-      if (hasOverlap) {
-        const lostMsg = 'Congratulations! We found a potential match for your lost item. Please check here.';
-        const foundMsg = 'We found a potential match for the item you reported found. Please check here.';
-
-        await supabase.from('notifications').insert([
-          {
-            type: 'system',
-            message: match.type === 'lost' ? lostMsg : foundMsg,
-            item_id: newItem.id,
-            from_user: null,
-            from_user_name: 'CampusConnect System',
-            to_user: match.reportedBy,
-          },
-          {
-            type: 'system',
-            message: newItem.type === 'lost' ? lostMsg : foundMsg,
-            item_id: match.id,
-            from_user: null,
-            from_user_name: 'CampusConnect System',
-            to_user: newItem.reportedBy,
-          },
-        ]);
+      // Notify each existing item owner that a new match arrived
+      for (const match of matches) {
+        await supabase.from('notifications').insert({
+          type: 'match',
+          message: `💡 A new ${newItem.type} item "${newItem.title}" was just posted that might match your ${match.type} item "${match.title}". Check it out!`,
+          item_id: newItem.id,
+          from_user: null,
+          from_user_name: 'CampusConnect System',
+          to_user: match.reportedBy,
+        });
       }
     }
 

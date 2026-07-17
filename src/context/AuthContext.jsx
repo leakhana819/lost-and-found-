@@ -68,6 +68,17 @@ export function AuthProvider({ children }) {
     const { password: _pw, ...safeUser } = data;
     storeUser(safeUser);
     setCurrentUser(safeUser);
+
+    // Send welcome notification
+    await supabase.from('notifications').insert({
+      type: 'system',
+      message: `🎉 Welcome to CampusConnect, ${safeUser.name}! You can now post lost & found items and help your campus community.`,
+      item_id: null,
+      from_user: null,
+      from_user_name: 'CampusConnect System',
+      to_user: safeUser.id,
+    });
+
     return { success: true };
   }, []);
 
