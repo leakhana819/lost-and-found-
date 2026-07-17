@@ -45,7 +45,8 @@ export default function Signup() {
     else if (form.password !== form.confirmPassword) e.confirmPassword = 'Passwords do not match';
     if (!form.department) e.department = 'Please select your department';
     if (!form.year) e.year = 'Please select your year';
-    if (form.phone.trim() && !/^\d{10}$/.test(form.phone.trim())) e.phone = 'Phone must be exactly 10 digits';
+    if (!form.phone.trim()) e.phone = 'Phone number is required';
+    else if (!/^\d{10}$/.test(form.phone.trim())) e.phone = 'Phone must be exactly 10 digits';
     return e;
   };
 
@@ -183,7 +184,7 @@ export default function Signup() {
 
             {/* Phone (optional) */}
             <div className="form-group">
-              <label className="form-label">Phone Number <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>(optional)</span></label>
+              <label className="form-label">Phone Number</label>
               <input
                 type="tel"
                 className="form-input"
