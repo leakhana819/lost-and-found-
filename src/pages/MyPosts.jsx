@@ -4,12 +4,13 @@ import { useAuth } from '../context/AuthContext.jsx';
 import { useItems } from '../context/ItemContext.jsx';
 import ItemCard from '../components/ItemCard.jsx';
 import EmptyState from '../components/EmptyState.jsx';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 export default function MyPosts() {
   const { currentUser } = useAuth();
   const { items } = useItems();
   const [activeTab, setActiveTab] = useState('all'); // all | active | resolved
+  const navigate = useNavigate();
 
   const myItems = useMemo(() => {
     return items.filter(i => i.reportedBy === currentUser?.id)
@@ -60,7 +61,7 @@ export default function MyPosts() {
                 icon="📝"
                 title={myItems.length === 0 ? "You haven't posted anything" : "No items found in this tab"}
                 message={myItems.length === 0 ? "Items you report as lost or found will appear here." : ""}
-                action={myItems.length === 0 ? { label: "Report an Item", onClick: () => window.location.href = '/report' } : null}
+                action={myItems.length === 0 ? { label: "Report an Item", onClick: () => navigate('/report') } : null}
               />
             </div>
           ) : (

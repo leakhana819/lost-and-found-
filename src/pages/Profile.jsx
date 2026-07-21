@@ -202,7 +202,7 @@ export default function Profile() {
                 <div className="p-stat-lbl">Items Resolved</div>
               </div>
               <div className="p-stat">
-                <div className="p-stat-val">{new Date(currentUser?.createdAt || Date.now()).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}</div>
+                <div className="p-stat-val">{new Date(currentUser?.created_at || Date.now()).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}</div>
                 <div className="p-stat-lbl">Joined</div>
               </div>
             </div>

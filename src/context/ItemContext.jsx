@@ -61,18 +61,20 @@ export function ItemProvider({ children }) {
     const newItem = normalizeItem(data);
 
     // ─── MATCHING LOGIC ───
-    // Notify based on same category, opposite type, unresolved items
+    // Query Supabase directly instead of using stale `items` state
     const oppositeType = newItem.type === 'lost' ? 'found' : 'lost';
-    const matches = items.filter(i =>
-      i.type === oppositeType &&
-      i.category === newItem.category &&
-      !i.resolved &&
-      i.reportedBy !== newItem.reportedBy  // don't notify yourself
-    );
+    const { data: matchData } = await supabase
+      .from('items')
+      .select('*')
+      .eq('type', oppositeType)
+      .eq('category', newItem.category)
+      .eq('resolved', false)
+      .neq('reported_by', newItem.reportedBy);
+
+    const matches = (matchData || []).map(normalizeItem);
 
     if (matches.length > 0) {
       // Notify the new poster that matches exist
-      const matchWord = newItem.type === 'lost' ? 'found' : 'lost';
       await supabase.from('notifications').insert({
         type: 'match',
         message: `🎉 Good news! There ${matches.length === 1 ? 'is' : 'are'} ${matches.length} potential match${matches.length === 1 ? '' : 'es'} for your ${newItem.type} item "${newItem.title}". Check the browse page!`,
@@ -98,7 +100,7 @@ export function ItemProvider({ children }) {
     await fetchItems();
     await fetchNotifications();
     return newItem;
-  }, [items, fetchItems, fetchNotifications]);
+  }, [fetchItems, fetchNotifications]);
 
   // ─── EDIT ITEM ────────────────────────────────────────────
   const editItem = useCallback(async (id, updates) => {
@@ -160,7 +162,7 @@ export function ItemProvider({ children }) {
       const existing = item.claimRequests || [];
       await supabase
         .from('items')
-        .update({ claim_requests: [...existing, claim.id], updated_at: new Date().toISOString() })
+        .update({ claim_requests: [...existing, claimantId], updated_at: new Date().toISOString() })
         .eq('id', itemId);
     }
 

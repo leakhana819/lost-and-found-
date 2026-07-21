@@ -62,7 +62,7 @@ export default function Dashboard() {
       <div className="container">
         {/* ─── HERO ─── */}
         <div className="dashboard-hero animate-fadeInDown">
-          <p className="hero-greeting">Hello, {currentUser?.name?.split(' ')[0]} 👋</p>
+          <p className="hero-greeting">Good {getGreeting()}, {currentUser?.name?.split(' ')[0]} 👋</p>
           <h1 className="hero-title">Welcome back.</h1>
           <p className="hero-sub">Manage all lost and found activities from one place.</p>
           <div className="hero-actions">

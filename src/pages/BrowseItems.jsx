@@ -26,12 +26,15 @@ export default function BrowseItems() {
   const [viewMode, setViewMode] = useState('grid'); // 'grid' | 'list'
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
+  // Serialize state to prevent re-runs on every navigation (location.state is a new ref each time)
+  const stateKey = JSON.stringify(location.state);
   useEffect(() => {
     if (location.state) {
       setFilters(prev => ({ ...prev, ...location.state }));
       setPage(1);
     }
-  }, [location.state]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stateKey]);
 
   const handleFilterChange = (newFilters) => {
     setFilters(newFilters);

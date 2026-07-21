@@ -39,7 +39,7 @@ export default function ReportItem() {
 
   const set = (key) => (e) => {
     setForm(f => ({ ...f, [key]: e.target.value }));
-    if (errors[key]) setErrors(e => { const n = { ...e }; delete n[key]; return n; });
+    if (errors[key]) setErrors(prev => { const n = { ...prev }; delete n[key]; return n; });
   };
 
   // ─── IMAGE HANDLING ──────────────────────

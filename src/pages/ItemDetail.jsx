@@ -10,6 +10,7 @@ import { useItems } from '../context/ItemContext.jsx';
 import { useToast } from '../context/ToastContext.jsx';
 import Modal from '../components/Modal.jsx';
 import EmptyState from '../components/EmptyState.jsx';
+import LoadingSpinner from '../components/LoadingSpinner.jsx';
 import { getCategoryInfo, formatDate, formatRelativeTime, getInitials } from '../utils/helpers.js';
 import './ItemDetail.css';
 
@@ -21,6 +22,7 @@ export default function ItemDetail() {
   const navigate = useNavigate();
 
   const [item, setItem] = useState(null);
+  const [itemLoading, setItemLoading] = useState(true);
   const [activeImage, setActiveImage] = useState(0);
   const [claimOpen, setClaimOpen] = useState(false);
   const [claimMsg, setClaimMsg] = useState('');
@@ -29,11 +31,22 @@ export default function ItemDetail() {
 
   // Fetch item from Supabase when page mounts
   useEffect(() => {
+    setItemLoading(true);
     getItemById(id).then(fresh => {
-      if (!fresh) navigate('/browse');
+      if (!fresh) navigate('/browse', { replace: true });
       else setItem(fresh);
-    });
+    }).finally(() => setItemLoading(false));
   }, [id, navigate, getItemById]);
+
+  if (itemLoading) {
+    return (
+      <div className="page-wrapper">
+        <div className="container" style={{ textAlign: 'center', padding: '4rem 0' }}>
+          <LoadingSpinner size="lg" text="Loading item…" />
+        </div>
+      </div>
+    );
+  }
 
   if (!item) {
     return (
@@ -193,9 +206,6 @@ export default function ItemDetail() {
             <div className="detail-actions">
               {isOwner ? (
                 <>
-                  <Link to={`/edit-item/${item.id}`} className="btn btn-secondary">
-                    <FiEdit2 /> Edit Item
-                  </Link>
                   {!item.resolved && (
                     <button className="btn btn-success" onClick={handleResolve}>
                       <FiCheckCircle /> Mark Resolved

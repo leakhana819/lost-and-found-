@@ -188,7 +188,7 @@ export default function Navbar() {
       {/* ── Mobile Menu ── */}
       {menuOpen && (
         <div className="mobile-menu animate-fadeInDown">
-          {NAV_LINKS.filter(l => isLoggedIn || (l.to !== '/my-posts' && l.to !== '/report')).map(({ to, label }) => (
+          {NAV_LINKS.filter(() => isLoggedIn).map(({ to, label }) => (
             <NavLink
               key={to}
               to={to}
